@@ -19,7 +19,6 @@ class _NotesPageState extends State<NotesPage> {
   final TextEditingController _descriptionController = TextEditingController();
   List<Map<String, dynamic>> _notes = [];
   bool _isLoading = false;
-  DateTime? _reminderDate;
   DateTime? _dueDate;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
@@ -56,7 +55,7 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context, bool isReminder) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -107,11 +106,7 @@ class _NotesPageState extends State<NotesPage> {
         );
 
         setState(() {
-          if (isReminder) {
-            _reminderDate = fullDate;
-          } else {
-            _dueDate = fullDate;
-          }
+          _dueDate = fullDate;
         });
       }
     }
@@ -145,7 +140,6 @@ class _NotesPageState extends State<NotesPage> {
         'room_id': widget.roomId,
         'title': _titleController.text,
         'description': _descriptionController.text,
-        'reminder': _reminderDate?.toIso8601String(),
         'due_date': _dueDate?.toIso8601String(),
         'is_done': false,
       });
@@ -153,7 +147,6 @@ class _NotesPageState extends State<NotesPage> {
       _titleController.clear();
       _descriptionController.clear();
       setState(() {
-        _reminderDate = null;
         _dueDate = null;
       });
     } catch (e) {
@@ -254,12 +247,8 @@ class _NotesPageState extends State<NotesPage> {
         deleteIcon: Icon(Icons.close, size: 18),
         onDeleted: date != null
             ? () => setState(() {
-                if (label.contains('Recordatorio')) {
-                  _reminderDate = null;
-                } else {
                   _dueDate = null;
-                }
-              })
+                })
             : null,
         backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
         shape: RoundedRectangleBorder(
@@ -270,7 +259,6 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   Widget _buildNoteItem(Map<String, dynamic> note, bool isCompleted) {
-    final reminder = note['reminder'] != null ? DateTime.parse(note['reminder']) : null;
     final dueDate = note['due_date'] != null ? DateTime.parse(note['due_date']) : null;
     final isOverdue = dueDate != null && !isCompleted && dueDate.isBefore(DateTime.now());
 
@@ -335,64 +323,34 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                   ),
                 ),
-              if (reminder != null || dueDate != null)
+              if (dueDate != null)
                 Padding(
                   padding: EdgeInsets.only(top: 12),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (reminder != null)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.notifications, size: 16, color: Colors.blue),
-                              SizedBox(width: 4),
-                              Text(
-                                _dateFormat.format(reminder),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.blue,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                            ],
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isOverdue ? Colors.red[50] : Colors.green[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event,
+                          size: 16,
+                          color: isOverdue ? Colors.red : Colors.green,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          _dateFormat.format(dueDate),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isOverdue ? Colors.red : Colors.green,
+                            decoration: isCompleted ? TextDecoration.lineThrough : null,
                           ),
                         ),
-                      if (dueDate != null)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isOverdue ? Colors.red[50] : Colors.green[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.event,
-                                size: 16,
-                                color: isOverdue ? Colors.red : Colors.green,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                _dateFormat.format(dueDate),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isOverdue ? Colors.red : Colors.green,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               Align(
@@ -573,24 +531,10 @@ class _NotesPageState extends State<NotesPage> {
                   maxLines: 2,
                 ),
                 SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDateChip(
-                        _reminderDate,
-                        'Agregar recordatorio',
-                        () => _selectDate(context, true),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: _buildDateChip(
-                        _dueDate,
-                        'Agregar fecha límite',
-                        () => _selectDate(context, false),
-                      ),
-                    ),
-                  ],
+                _buildDateChip(
+                  _dueDate,
+                  'Agregar fecha límite',
+                  () => _selectDate(context),
                 ),
                 SizedBox(height: 16),
                 SizedBox(

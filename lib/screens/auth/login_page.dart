@@ -137,19 +137,6 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: _obscurePassword,
                       validator: _validatePassword,
                     ),
-                    SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        child: Text(
-                          '¿Olvidaste tu contraseña?',
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    ),
                     SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,

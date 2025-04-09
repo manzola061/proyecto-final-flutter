@@ -21,7 +21,6 @@ class _EditNotePageState extends State<EditNotePage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
-  DateTime? _reminderDate;
   DateTime? _dueDate;
   bool _isSaving = false;
 
@@ -30,9 +29,6 @@ class _EditNotePageState extends State<EditNotePage> {
     super.initState();
     _titleController.text = widget.note['title'] ?? '';
     _descriptionController.text = widget.note['description'] ?? '';
-    if (widget.note['reminder'] != null) {
-      _reminderDate = DateTime.parse(widget.note['reminder']);
-    }
     if (widget.note['due_date'] != null) {
       _dueDate = DateTime.parse(widget.note['due_date']);
     }
@@ -45,7 +41,7 @@ class _EditNotePageState extends State<EditNotePage> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context, bool isReminder) async {
+  Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -96,11 +92,7 @@ class _EditNotePageState extends State<EditNotePage> {
         );
 
         setState(() {
-          if (isReminder) {
-            _reminderDate = fullDate;
-          } else {
-            _dueDate = fullDate;
-          }
+          _dueDate = fullDate;
         });
       }
     }
@@ -125,7 +117,6 @@ class _EditNotePageState extends State<EditNotePage> {
       await supabase.from('notes').update({
         'title': _titleController.text,
         'description': _descriptionController.text,
-        'reminder': _reminderDate?.toIso8601String(),
         'due_date': _dueDate?.toIso8601String(),
       }).eq('id', widget.note['id']);
 
@@ -158,12 +149,8 @@ class _EditNotePageState extends State<EditNotePage> {
         deleteIcon: Icon(Icons.close, size: 18),
         onDeleted: date != null
             ? () => setState(() {
-                if (label.contains('Recordatorio')) {
-                  _reminderDate = null;
-                } else {
                   _dueDate = null;
-                }
-              })
+                })
             : null,
         backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
         shape: RoundedRectangleBorder(
@@ -265,31 +252,17 @@ class _EditNotePageState extends State<EditNotePage> {
             ),
             SizedBox(height: 24),
             Text(
-              'Fechas importantes',
+              'Fecha límite',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurface.withOpacity(0.8),
               ),
             ),
             SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDateChip(
-                    _reminderDate,
-                    'Recordatorio',
-                    () => _selectDate(context, true),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _buildDateChip(
-                    _dueDate,
-                    'Fecha límite',
-                    () => _selectDate(context, false),
-                  ),
-                ),
-              ],
+            _buildDateChip(
+              _dueDate,
+              'Fecha límite',
+              () => _selectDate(context),
             ),
             SizedBox(height: 32),
             SizedBox(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../tasks/tasks_page.dart';
 import '../auth/login_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -237,6 +238,21 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.person, size: 24),
+            onPressed: () {
+              final user = supabase.auth.currentUser;
+              if (user != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(user: user),
+                  ),
+                );
+              }
+            },
+            tooltip: 'Perfil',
+          ),
           IconButton(
             icon: Icon(Icons.logout, size: 24),
             onPressed: _confirmSignOut,
